@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Pajthy to AWS on akarasz.me</title><link>https://akarasz.me/series/pajthy-to-aws/</link><description>Recent content in Pajthy to AWS on akarasz.me</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><lastBuildDate>Tue, 16 Mar 2021 19:21:00 +0100</lastBuildDate><atom:link href="https://akarasz.me/series/pajthy-to-aws/index.xml" rel="self" type="application/rss+xml"/><item><title>Working with DynamoDB</title><link>https://akarasz.me/2021/03/working-with-dynamodb/</link><pubDate>Tue, 16 Mar 2021 19:21:00 +0100</pubDate><guid>https://akarasz.me/2021/03/working-with-dynamodb/</guid><description>&lt;p>In the previous piece we redesigned the &lt;code>store&lt;/code> interface for the backend in
+hope to have a better DynamoDB implementation to it. After the changes we have
+to provide a &lt;code>Load&lt;/code> method that returns our &lt;code>Session&lt;/code> object with the current
+version of it, and a &lt;code>Save&lt;/code> method that will get the ID, the modified &lt;code>Session&lt;/code>
+object and the (assumably) current version that matches the one we still have in
+the database; if the provided version does not match the current version, the
+method should return an &lt;code>ErrVersionMismatch&lt;/code> error.&lt;/p>
+&lt;p>Originally I was planning to have the content of this post together with the
+previous one but while in the making I realized it was getting too long for a
+single post. On the flip side, now that the post was splitted in two, I have
+the chance to show some things in more details that I originally planned 🎉!&lt;/p></description></item><item><title>Optimistic Locking</title><link>https://akarasz.me/2021/03/optimistic-locking/</link><pubDate>Mon, 08 Mar 2021 20:40:00 +0100</pubDate><guid>https://akarasz.me/2021/03/optimistic-locking/</guid><description>&lt;p>In the previous post we were wrapping our backend server into a lambda
+function. It is working just fine, but without a persistent storage layer
+there is no much worth to it; and the in-memory solution we have right now
+is everything but ideal for a serverless architecture.&lt;/p>
+&lt;p>The &lt;code>store&lt;/code> interface we work with for the storage layer is a rather simple one:&lt;/p>
+&lt;ul>
+&lt;li>there is a &lt;strong>Load&lt;/strong> method, which returns the &lt;code>Session&lt;/code> object from the
+database if it&amp;rsquo;s present, otherwise returns an error&lt;/li>
+&lt;li>and a &lt;strong>Save&lt;/strong>, that inserts a &lt;code>Session&lt;/code> with given ID&lt;/li>
+&lt;/ul>
+&lt;p>Couldn&amp;rsquo;t get any simpler, right?&lt;/p>
+&lt;p>&lt;img src="https://media.giphy.com/media/WUay9BLLngVU3zs95c/giphy.gif" alt="man shrugs and says: &amp;amp;lsquo;easy&amp;amp;rsquo;" />&lt;/p>
+&lt;p>The in-memory implementation uses a simple map for storing and retrieving the
+data and it&amp;rsquo;s prefect for the job; so let&amp;rsquo;s give a try for AWS&amp;rsquo;s flagship,
+key-value database, the &lt;a href="https://aws.amazon.com/dynamodb/">DynamoDB&lt;/a> - which, if
+you strip away all the fancy features, is just a simple map after all&amp;hellip;&lt;/p></description></item><item><title>Wrap a REST Service in Lambda</title><link>https://akarasz.me/2021/02/wrap-a-rest-service-in-lambda/</link><pubDate>Thu, 25 Feb 2021 17:50:48 +0100</pubDate><guid>https://akarasz.me/2021/02/wrap-a-rest-service-in-lambda/</guid><description>&lt;p>At a first glance it might sound controversial that I want to wrap a REST
+&lt;em>server&lt;/em> - a typically long-running process - into a &lt;em>serverless&lt;/em> function. I&amp;rsquo;m
+sure this trick won&amp;rsquo;t work with any services; in our case luckily there are
+some aspects of the &lt;em>pajthy&lt;/em> backend that make this possible:&lt;/p>
+&lt;ul>
+&lt;li>the &lt;strong>web server&lt;/strong> is &lt;strong>included&lt;/strong> in the executable (for an &lt;em>excluded&lt;/em>
+example think about standalon tomcat instance with a &lt;code>.war&lt;/code> package)&lt;/li>
+&lt;li>&lt;strong>minimal ramp-up time&lt;/strong> before able to serve an incoming request (again,
+just compare your minimal java webapp startup time with a golang app with the
+same functionality).&lt;/li>
+&lt;/ul>
+&lt;p>Also there is an extra surprise in go&amp;rsquo;s standard library that comes handy, more
+on that later, I don&amp;rsquo;t want to spoil the fun! 😉&lt;/p></description></item><item><title>Moving an SPA to S3</title><link>https://akarasz.me/2021/02/moving-an-spa-to-s3/</link><pubDate>Sun, 21 Feb 2021 18:19:34 +0100</pubDate><guid>https://akarasz.me/2021/02/moving-an-spa-to-s3/</guid><description>&lt;p>This time will walk you through how I moved the &lt;em>pajthy&lt;/em> frontend -
+a single page site written in react and packed on top of an NGINX server in a
+docker container - into AWS.&lt;/p>
+&lt;blockquote>
+&lt;p>SPA stands for Single Page Application; it&amp;rsquo;s a setup when all the assets
+that are in the application&amp;rsquo;s domain are loaded with the first request. It has
+the same purpose as why some games have loading screens: it will reduce the
+time of content loading &lt;em>during&lt;/em> in-app.&lt;/p>
+&lt;/blockquote>
+&lt;p>The &lt;em>pajthy&lt;/em> frontend is an SPA, just a collection of static assets. Also since
+CORS headers are set up properly in an &amp;ldquo;allow all for everybody&amp;rdquo; way it does not
+matter where the site is hosted; if it can be downloaded it can be used as
+well.&lt;/p>
+&lt;p>Saying that, the plan was to set up a new domain for &lt;em>pajthy&lt;/em> (up until now it
+was using a subdomain for akarasz.me), have some of the signature AWS service,
+S3 (short for Simple Storage Service 💥), upload the artifacts and that&amp;rsquo;s
+it, we have lift-off!&lt;/p></description></item><item><title>Intermezzo: why have I choose serverless?</title><link>https://akarasz.me/2021/02/intermezzo-why-have-i-choose-serverless/</link><pubDate>Wed, 17 Feb 2021 21:56:53 +0100</pubDate><guid>https://akarasz.me/2021/02/intermezzo-why-have-i-choose-serverless/</guid><description>&lt;p>Since I was a tad over-excited while drafting out the previous post,
+I had to split it: it would&amp;rsquo;ve been just too much for one.
+Instead I tried to separate the two posts so the first one starts explaining
+what this is all about while the second (this) one goes a bit more into
+describing things you probably already familiar with:&lt;/p>
+&lt;ol>
+&lt;li>what I mean when I&amp;rsquo;m talking about &amp;ldquo;cloud&amp;rdquo;&lt;/li>
+&lt;li>comparsion of the basic building blocks for computing&lt;/li>
+&lt;/ol>
+&lt;p>and one that&amp;rsquo;s not that obvious: why did I moved from one cloud to another.&lt;/p></description></item><item><title>How did I go serverless</title><link>https://akarasz.me/2021/02/how-did-i-go-serverless/</link><pubDate>Tue, 16 Feb 2021 22:24:34 +0100</pubDate><guid>https://akarasz.me/2021/02/how-did-i-go-serverless/</guid><description>&lt;p>Serverless architecture is a recent interest of mine; in the last couple of
+weeks I was involved in a new project at work that&amp;rsquo;s running entirely in the AWS
+cloud. Since my most hands-on experience with the cloud so far was having a few
+virtual machines at Digital Ocean, I figured it&amp;rsquo;s best if I start exploring the
+Amazon Web Services at the beginning: with the ramp-up guide for the entry-level
+AWS certification, &amp;ldquo;Cloud Practicioner&amp;rdquo;.&lt;/p>
+&lt;p>Needless to say my motivation for finishing the entire course was dropping fast,
+but it was just enough for me to read through the (currently) 72 pages
+of &amp;ldquo;Overview of AWS&amp;rdquo; whitepaper listing all the available AWS services with
+a short (and very useful 🙄) marketing pitch. While
+reading the guide I realized, that the &amp;ldquo;lambda&amp;rdquo; service I heard about first a
+few years ago (and that time after a quick research I classified it as
+&amp;ldquo;useless&amp;rdquo;) is actually a quite interesting and useful tool when combined with
+additional services in the portfolio.&lt;/p>
+&lt;p>&lt;img src="https://media.giphy.com/media/XRnbDusSE2cBG/giphy.gif" alt="amazed" title="So shiny!" />&lt;/p>
+&lt;p>So what should one do after reading a few pages about something new and shiny?
+Tries it out in practice!&lt;/p></description></item></channel></rss>
